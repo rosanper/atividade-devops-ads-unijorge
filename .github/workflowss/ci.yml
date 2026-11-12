@@ -1,0 +1,48 @@
+
+name: ByteStore - CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    name: Build, Test e Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      # Obtém o código do repositório
+      - name: Checkout do código
+        uses: actions/checkout@v7
+
+      # Configura o Java e o cache do Maven
+      - name: Configurar Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      # Etapa 1 - Build
+      - name: Build - Compilar aplicação
+        run: ./mvnw -B -ntp clean compile
+
+      # Etapa 2 - Test
+      - name: Test - Executar testes e cobertura
+        run: ./mvnw -B -ntp verify
+
+      # Etapa 3 - Artifact
+      - name: Artifact - Disponibilizar aplicação
+        uses: actions/upload-artifact@v7
+        with:
+          name: bytestore-${{ github.run_number }}
+          path: target/*.jar
+          if-no-files-found: error
+          retention-days: 7
